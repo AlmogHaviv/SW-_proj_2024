@@ -9,11 +9,12 @@
 
 /* Function Declarations */
 double** read_data(const char* filename, int* n, int* d);
+void get_dimensions(const char* filename, int* n, int* d);
 double** allocate_matrix(int n, int k);
 void free_matrix(double** matrix, int n);
 double squared_euclidean(double* a, double* b, int d);
 double** sym(double** data, int n, int d);
-double** ddg(double** A, int n, int d);
+double** ddg(double** A, int n);
 double** norm(double** A, double** D, int n);
 double frobenius_norm(double** H, double** H_new, int n, int k);
 double** matrix_multiply(double** A, double** B, int m, int n, int p);
@@ -27,7 +28,7 @@ int main(int argc, char* argv[]) {
     int n, d;
     double** data;
 
-    if (argc < 3) {
+    if (argc != 3) {
         printf("An Error Has Occurred");
         return 1;
     }
@@ -42,13 +43,13 @@ int main(int argc, char* argv[]) {
         free_matrix(A, n);
     } else if (strcmp(goal, "ddg") == 0) {
         double** A = sym(data, n, d);
-        double** D = ddg(A, n, d);
+        double** D = ddg(A, n);
         print_matrix(D, n);
         free_matrix(A, n);
         free_matrix(D, n);
     } else if (strcmp(goal, "norm") == 0) {
         double** A = sym(data, n, d);
-        double** D = ddg(A, n, d);
+        double** D = ddg(A, n);
         double** W = norm(A, D, n);
         print_matrix(W, n);
         free_matrix(A, n);
@@ -60,38 +61,70 @@ int main(int argc, char* argv[]) {
     return 0;
 }
 
-/* Function to read data from input file */
-double** read_data(const char* filename, int* n, int* d) {
+/* Function to get dimensions (n and d) from the input file */
+void get_dimensions(const char* filename, int* n, int* d) {
     FILE* file;
-    double** data;
-    int i, j;
+    char line[1024];
+    *n = 0; /* Initialize number of rows */
+    *d = 0; /* Initialize number of columns */
 
     file = fopen(filename, "r");
     if (!file) {
-        printf("An Error Has Occurred");
+        printf("An Error Has Occurred\n");
         exit(EXIT_FAILURE);
     }
 
-    /* First, read the number of points (n) and dimensions (d) */
-    if (fscanf(file, "%d %d", n, d) != 2) {
-        printf("An Error Has Occurred\n");
-        fclose(file);
-        exit(EXIT_FAILURE);
+    /* Read the first line to determine the number of dimensions (d) */
+    if (fgets(line, sizeof(line), file)) {
+        char* token = strtok(line, ",");
+        while (token != NULL) {
+            (*d)++;
+            token = strtok(NULL, ",");
+        }
+        (*n)++; /* Count the first line */
     }
+
+    /* Count the remaining lines to get the number of points (n) */
+    while (fgets(line, sizeof(line), file)) {
+        (*n)++;
+    }
+
+    fclose(file);
+}
+
+/* Function to read data from input CSV file */
+double** read_data(const char* filename, int* n, int* d) {
+    FILE* file;
+    double** data;
+    char line[1024];
+    int i = 0; /* Initialize row index */
+    int j; /* Column index */
+
+    /* Get dimensions (n and d) from the file */
+    get_dimensions(filename, n, d);
 
     /* Allocate memory for the data matrix */
     data = allocate_matrix(*n, *d);
 
-    /* Read the data points */
-    for (i = 0; i < *n; i++) {
-        for (j = 0; j < *d; j++) {
-            if (fscanf(file, "%lf", &data[i][j]) != 1) {
-                printf("An Error Has Occurred\n");
-                fclose(file);
-                free_matrix(data, *n);  // Free allocated memory before exiting
-                exit(EXIT_FAILURE);
-            }
+    file = fopen(filename, "r");
+    if (!file) {
+        printf("An Error Has Occurred\n");
+        exit(EXIT_FAILURE);
+    }
+
+    /* Rewind the file pointer to the beginning of the file */
+    rewind(file);
+
+    /* Read each line and fill the matrix */
+    while (fgets(line, sizeof(line), file)) {
+        char* token = strtok(line, ",");
+        j = 0; /* Initialize column index */
+        while (token != NULL) {
+            data[i][j] = atof(token);
+            token = strtok(NULL, ",");
+            j++;
         }
+        i++;
     }
 
     fclose(file);
@@ -165,16 +198,14 @@ double** sym(double** data, int n, int d) {
 }
 
 /* 1.2: Calculate the Diagonal Degree Matrix */
-double** ddg(double** A, int n, int d) {
+double** ddg(double** A, int n) {
     double** D = allocate_matrix(n, n);
     int i, j;
 
     for (i = 0; i < n; i++) {
         double sum = 0;
         for (j = 0; j < n; j++) {
-            if (j < d){
-                sum += A[i][j];
-            }
+            sum += A[i][j];
             D[i][j] = 0.0;
         }
         D[i][i] = sum;
@@ -186,12 +217,22 @@ double** ddg(double** A, int n, int d) {
 double** norm(double** A, double** D, int n) {
     double** W = allocate_matrix(n, n);
     double** D_sqrt = allocate_matrix(n, n);
-    double** temp;
+    double** temp = allocate_matrix(n, n);
     int i;
+    double threshold = 1e-10;
+
+    /* Initialize D^(-1/2) with zeros and set the diagonal elements */
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < n; j++) {
+            D_sqrt[i][j] = 0.0;  // Set all elements to zero initially
+        }
+    }
+
 
     /* Calculate D^(-1/2) */
     for (i = 0; i < n; i++) {
-        double sqrt_value = (D[i][i] != 0) ? 1.0 / sqrt(D[i][i]) : 0.0;  /* Avoid division by zero */
+       double value = D[i][i];
+        double sqrt_value = (value > threshold) ? 1.0 / sqrt(value) : 1.0 / sqrt(threshold);
         D_sqrt[i][i] = sqrt_value;
     }
 
@@ -205,6 +246,7 @@ double** norm(double** A, double** D, int n) {
 
     return W;
 }
+
 
 /* Helper: Frobenius norm between two matrices */
 double frobenius_norm(double** H, double** H_new, int n, int k) {
@@ -222,8 +264,11 @@ double frobenius_norm(double** H, double** H_new, int n, int k) {
 /* Function to multiply two matrices */
 double** matrix_multiply(double** A, double** B, int m, int n, int p) {
     double** C = allocate_matrix(m, p);
-    int i, j, k;
+    if (C == NULL) {
+        return NULL;
+    }
 
+    int i, j, k;
     for (i = 0; i < m; i++) {
         for (j = 0; j < p; j++) {
             C[i][j] = 0;
@@ -239,12 +284,18 @@ double** matrix_multiply(double** A, double** B, int m, int n, int p) {
 void update_H(double** H, double** W, int n, int k) {
     /* Calculate WH */
     double** WH = matrix_multiply(W, H, n, n, k);
-    double** H_T = allocate_matrix(k, n);
-    int i, j;
-    double** HHT;
-    double** HHTH;
+    if (WH == NULL) {
+        return;
+    }
 
-    /* Calculate H^T */
+    /* Calculate transpose H^T */
+    double** H_T = allocate_matrix(k, n);
+    if (H_T == NULL) {
+        free_matrix(WH, n);
+        return;
+    }
+
+    int i, j;
     for (i = 0; i < k; i++) {
         for (j = 0; j < n; j++) {
             H_T[i][j] = H[j][i]; /* Transpose */
@@ -252,10 +303,21 @@ void update_H(double** H, double** W, int n, int k) {
     }
 
     /* Calculate H(H^T)H */
-    HHT = matrix_multiply(H, H_T, n, k, n);
-    HHTH = matrix_multiply(HHT, H, n, n, k);
+    double** HHT = matrix_multiply(H, H_T, n, k, n);
+    if (HHT == NULL) {
+        free_matrix(WH, n);
+        free_matrix(H_T, k);
+        return;
+    }
 
-    /* Update H */
+    double** HHTH = matrix_multiply(HHT, H, n, n, k);
+    if (HHTH == NULL) {
+        free_matrix(WH, n);
+        free_matrix(H_T, k);
+        free_matrix(HHT, n);
+        return;
+    }
+
     for (i = 0; i < n; i++) {
         for (j = 0; j < k; j++) {
             double denominator = HHTH[i][j] != 0 ? HHTH[i][j] : 1;
@@ -270,23 +332,29 @@ void update_H(double** H, double** W, int n, int k) {
     free_matrix(HHTH, n);
 }
 
-/* 1.4: Symmetric NMF algorithm */
+/* Symmetric NMF algorithm */
 double** symnmf(int n, int k, double** W, double** H) {
-    double** H_new = allocate_matrix(n, k);
     int iter = 0;
-    double** temp;
+    double** temp = allocate_matrix(n, k);
+    int i, j;
+
 
     while (iter < MAX_ITER) {
-        update_H(H_new, W, n, k);
-        if (frobenius_norm(H, H_new, n, k) < EPSILON) break;
+        for (i = 0; i < n; i++) {
+            for (j = 0; j < k; j++) {
+                temp[i][j] = H[i][j]; /* Transpose */
+            }
+        }
 
-        temp = H;
-        H = H_new;
-        H_new = temp;
+        update_H(H, W, n, k);
+
+        double norm = frobenius_norm(temp, H, n, k);
+
+        if (norm < EPSILON) break;
         iter++;
     }
+    free_matrix(temp, k);
 
-    free_matrix(H_new, n);
     return H;  /* Memory to be freed externally */
 }
 

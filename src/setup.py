@@ -1,4 +1,5 @@
 from setuptools import setup, Extension
+import numpy as np
 
 # List all the source files that are part of your extension
 module = Extension('symnmf',

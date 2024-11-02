@@ -18,11 +18,20 @@ def load_data(file_name):
     return res
 
 
-def initialize_H(W, k):
+def initialize_H(W, n, k):
+    # Set random seed for reproducibility
     np.random.seed(1234)
+
+    # Calculate the average of all entries in W
     m = np.mean(W)
-    H_init = np.random.uniform(0, 2 * np.sqrt(m / k), (W.shape[0], k))
-    return H_init
+
+    # Calculate the upper bound for random values in H
+    upper_bound = 2 * np.sqrt(m / k)
+
+    # Randomly initialize H with values in the interval [0, upper_bound]
+    H = np.random.uniform(0, upper_bound, size=(n, k))
+
+    return H
 
 
 def main():
@@ -38,37 +47,39 @@ def main():
 
         if args.goal == 'sym':
             # Call the C function to compute the similarity matrix
-            W = symnmf.sym(data, n, d)
-            print_matrix(W)
+            sym_mat = symnmf.sym(data, n, d)
+            print_matrix(sym_mat)
 
         elif args.goal == 'ddg':
             # Call the C function to compute the diagonal degree matrix
-            D = symnmf.ddg(data, n, d)
-            print_matrix(D)
+            sym_mat = symnmf.sym(data, n, d)
+            ddg_mat = symnmf.ddg(sym_mat, n)
+            print_matrix(ddg_mat)
 
         elif args.goal == 'norm':
             # Call the C function to compute the normalized similarity matrix
             sym_mat = symnmf.sym(data, n, d)
-            ddg_mat = symnmf.ddg(data, n, d)
+            ddg_mat = symnmf.ddg(sym_mat, n)
             W_norm = symnmf.norm(sym_mat, ddg_mat, n)
             print_matrix(W_norm)
 
         elif args.goal == 'symnmf':
             # Initialize the similarity matrix using the C extension
             sym_mat = symnmf.sym(data, n, d)
-            ddg_mat = symnmf.ddg(data, n, d)
+            ddg_mat = symnmf.ddg(sym_mat, n)
             W_norm = symnmf.norm(sym_mat, ddg_mat, n)
+
             # Initialize H
-            H_init = initialize_H(W, args.k)
+            H_init = initialize_H(np.array(W_norm), n, args.k).tolist()
+
             # Call the C function to perform SymNMF and get the final H
-            H_final = symnmf.symnmf(n, args.k, W_norm, data)
+            H_final = symnmf.symnmf(n, args.k, W_norm, H_init)
             print_matrix(H_final)
 
         else:
             print("An Error Has Occurred!")
 
     except Exception as e:
-        print(e)
         print("An Error Has Occurred!")
 
 
@@ -76,7 +87,6 @@ def print_matrix(matrix):
     # Print the matrix with 4 decimal places, each row in a new line
     for row in matrix:
         print(','.join(f'{value:.4f}' for value in row))
-
 
 
 if __name__ == "__main__":
