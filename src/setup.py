@@ -3,7 +3,7 @@ import numpy as np
 
 # List all the source files that are part of your extension
 module = Extension('symnmf',
-                   sources=['symnmfmodule.c', 'symnmf.c'])
+                   sources=['symnmfmodule.c', 'symnmf.c', 'symnmfhelpers.c'])
 
 setup(name='symnmf',
       version='1.0',

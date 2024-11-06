@@ -3,17 +3,13 @@
 #include "symnmf.h"
 #include <stdlib.h>
 
-/* Helper function declarations */
-static double** python_matrix_to_c_matrix(PyObject* py_matrix, int n, int d);
-static PyObject* c_matrix_to_python_matrix(double** matrix, int n, int d);
-
 /* Convert a Python list of lists (py_matrix) to a C matrix */
 static double** python_matrix_to_c_matrix(PyObject* py_matrix, int n, int d) {
-    double** c_matrix = (double**)malloc(n * sizeof(double*));
+    double** c_matrix = (double**)calloc(n, sizeof(double*));
     if (!c_matrix) return NULL;  /* Check allocation */
 
     for (int i = 0; i < n; i++) {
-        c_matrix[i] = (double*)malloc(d * sizeof(double));
+        c_matrix[i] = (double*)calloc(d, sizeof(double));
         if (!c_matrix[i]) return NULL;  /* Check allocation */
 
         PyObject* row = PyList_GetItem(py_matrix, i);
@@ -39,63 +35,82 @@ static PyObject* c_matrix_to_python_matrix(double** matrix, int n, int d) {
     return py_matrix;
 }
 
-/* Helper function to free a dynamically allocated C matrix */
-static void free_c_matrix(double** matrix, int n) {
-    for (int i = 0; i < n; i++) {
-        free(matrix[i]);
+/* Helper function to get the number of rows and cols */
+void calc_dimensions(PyObject *py_matrix, int *rows, int *cols) {
+    *rows = PyList_Size(py_matrix);
+    if (*rows == 0) {
+        printf("An Error Has Occurred\n");
+        printf("num of rows is:%d",*rows);
+        return;
     }
-    free(matrix);
+    *cols = PyList_Size(PyList_GetItem(py_matrix, 0));
 }
 
 /* API function sym */
 static PyObject* sym_wrapper(PyObject* self, PyObject* args) {
     PyObject *data_array;
-    int n, d;
-    if (!PyArg_ParseTuple(args, "Oii", &data_array, &n, &d)) return NULL;
+    int n = 0;
+    int d = 0;
+    if (!PyArg_ParseTuple(args, "O", &data_array)) return NULL;
 
+    calc_dimensions(data_array, &n, &d);
     double** data = python_matrix_to_c_matrix(data_array, n, d);
-    double** A = sym(data, n, d);
+    double** res = allocate_matrix(n, n);
+    if(!res){
+        printf("An Error Has Occurred\n");
+        free_matrix(data, n);
+        return NULL;  
+    }
+    sym(data, res, n, d);
 
-    PyObject* result_array = c_matrix_to_python_matrix(A, n, n);
-
-    free_c_matrix(data, n);
-    free_c_matrix(A, n);
+    PyObject* result_array = c_matrix_to_python_matrix(res, n, n);
+    free_matrix(data, n); free_matrix(res, n);
 
     return result_array;
 }
 
 /* API function ddg */
 static PyObject* ddg_wrapper(PyObject* self, PyObject* args) {
-    PyObject *sym_array;
-    int n;
-    if (!PyArg_ParseTuple(args, "Oi", &sym_array, &n)) return NULL;
+    PyObject *data_array;
+    int n = 0;
+    int d = 0;
+    if (!PyArg_ParseTuple(args, "O", &data_array)) return NULL;
 
-    double** sym_matrix = python_matrix_to_c_matrix(sym_array, n, n);
-    double** D = ddg(sym_matrix, n);
+    calc_dimensions(data_array, &n, &d);
+    double** data = python_matrix_to_c_matrix(data_array, n, d);
+    double** res = allocate_matrix(n, n);
+    if(!res){
+        printf("An Error Has Occurred\n");
+        free_matrix(data, n);
+        return NULL;  
+    }
+    ddg(data, res, n, d);
 
-    PyObject* result_array = c_matrix_to_python_matrix(D, n, n);
-
-    free_c_matrix(sym_matrix, n);
-    free_c_matrix(D, n);
+    PyObject* result_array = c_matrix_to_python_matrix(res, n, n);
+    free_matrix(data, n); free_matrix(res, n);
 
     return result_array;
 }
 
 /* API function norm */
 static PyObject* norm_wrapper(PyObject* self, PyObject* args) {
-    PyObject *sym_array, *ddg_array;
-    int n;
-    if (!PyArg_ParseTuple(args, "OOi", &sym_array, &ddg_array, &n)) return NULL;
+    PyObject *data_array;
+    int n = 0;
+    int d = 0;
+    if (!PyArg_ParseTuple(args, "O", &data_array)) return NULL;
 
-    double** sym_matrix = python_matrix_to_c_matrix(sym_array, n, n);
-    double** ddg_matrix = python_matrix_to_c_matrix(ddg_array, n, n);
-    double** W = norm(sym_matrix, ddg_matrix, n);
+    calc_dimensions(data_array, &n, &d);
+    double** data = python_matrix_to_c_matrix(data_array, n, d);
+    double** res = allocate_matrix(n, n);
+    if(!res){
+        printf("An Error Has Occurred\n");
+        free_matrix(data, n);
+        return NULL;  
+    }
+    norm(data, res, n, d);
 
-    PyObject* result_array = c_matrix_to_python_matrix(W, n, n);
-
-    free_c_matrix(sym_matrix, n);
-    free_c_matrix(ddg_matrix, n);
-    free_c_matrix(W, n);
+    PyObject* result_array = c_matrix_to_python_matrix(res, n, n);
+    free_matrix(data, n); free_matrix(res, n);
 
     return result_array;
 }
@@ -112,9 +127,7 @@ static PyObject* symnmf_wrapper(PyObject* self, PyObject* args) {
 
     PyObject* result_array = c_matrix_to_python_matrix(H_final, n, k);
 
-    free_c_matrix(W, n);
-    free_c_matrix(H, k);
-
+    free_matrix(W, n); free_matrix(H, k);
     return result_array;
 }
 

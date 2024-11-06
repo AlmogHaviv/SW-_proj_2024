@@ -40,47 +40,39 @@ def main():
         data = load_data(args.file_name)
         data = np.ascontiguousarray(data, dtype=np.float64).tolist()
         n = len(data)
-        d = len(data[0])
-        if int(args.k) >= len(data):
-            print("An Error Has Occurred!")
+        if int(args.k) >= n:
+            print("An Error Has Occurred")
             return
 
         if args.goal == 'sym':
             # Call the C function to compute the similarity matrix
-            sym_mat = symnmf.sym(data, n, d)
+            sym_mat = symnmf.sym(data)
             print_matrix(sym_mat)
 
         elif args.goal == 'ddg':
             # Call the C function to compute the diagonal degree matrix
-            sym_mat = symnmf.sym(data, n, d)
-            ddg_mat = symnmf.ddg(sym_mat, n)
+            ddg_mat = symnmf.ddg(data)
             print_matrix(ddg_mat)
 
         elif args.goal == 'norm':
             # Call the C function to compute the normalized similarity matrix
-            sym_mat = symnmf.sym(data, n, d)
-            ddg_mat = symnmf.ddg(sym_mat, n)
-            W_norm = symnmf.norm(sym_mat, ddg_mat, n)
+            W_norm = symnmf.norm(data)
             print_matrix(W_norm)
 
         elif args.goal == 'symnmf':
             # Initialize the similarity matrix using the C extension
-            sym_mat = symnmf.sym(data, n, d)
-            ddg_mat = symnmf.ddg(sym_mat, n)
-            W_norm = symnmf.norm(sym_mat, ddg_mat, n)
-
+            W_norm = symnmf.norm(data)
             # Initialize H
             H_init = initialize_H(np.array(W_norm), n, args.k).tolist()
-
             # Call the C function to perform SymNMF and get the final H
             H_final = symnmf.symnmf(n, args.k, W_norm, H_init)
             print_matrix(H_final)
 
         else:
-            print("An Error Has Occurred!")
+            print("An Error Has Occurred")
 
     except Exception as e:
-        print("An Error Has Occurred!")
+        print("An Error Has Occurred")
 
 
 def print_matrix(matrix):
