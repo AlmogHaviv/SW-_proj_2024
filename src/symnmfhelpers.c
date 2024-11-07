@@ -205,7 +205,7 @@ void print_matrix(double** matrix, int n) {
         for (j = 0; j < n; j++) {
             printf("%.4f", matrix[i][j]);
             if (j < n - 1) {
-                printf(", ");
+                printf(",");
             }
         }
         printf("\n");

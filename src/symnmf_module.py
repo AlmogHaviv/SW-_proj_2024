@@ -1,6 +1,7 @@
 import numpy as np
 import argparse
-import symnmf  # Import the C extension module
+import warnings
+import symnmf_module # Import the C extension module
 
 
 def parse_arguments():
@@ -13,10 +14,11 @@ def parse_arguments():
 
 def load_data(file_name):
     # Load data points from the file, assuming one data point per line
-    data = np.loadtxt(file_name, delimiter=',')
-    res = data.tolist()
-    return res
-
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", category=UserWarning)
+        data = np.loadtxt(file_name, delimiter=',')
+        res = data.tolist()
+        return res
 
 def initialize_H(W, n, k):
     # Set random seed for reproducibility
@@ -32,6 +34,17 @@ def initialize_H(W, n, k):
     H = np.random.uniform(0, upper_bound, size=(n, k))
 
     return H
+
+
+def symnmf_construct(data, k, n):
+     # Initialize the similarity matrix using the C extension
+    W_norm = symnmf.norm(data)
+    # Initialize H
+    H_init = initialize_H(np.array(W_norm), n, k).tolist()
+    # Call the C function to perform SymNMF and get the final H
+    H_final = symnmf.symnmf(n, k, W_norm, H_init)
+
+    return H_final
 
 
 def main():
@@ -60,12 +73,7 @@ def main():
             print_matrix(W_norm)
 
         elif args.goal == 'symnmf':
-            # Initialize the similarity matrix using the C extension
-            W_norm = symnmf.norm(data)
-            # Initialize H
-            H_init = initialize_H(np.array(W_norm), n, args.k).tolist()
-            # Call the C function to perform SymNMF and get the final H
-            H_final = symnmf.symnmf(n, args.k, W_norm, H_init)
+            H_final = symnmf_construct(data, args.k, n)
             print_matrix(H_final)
 
         else:
