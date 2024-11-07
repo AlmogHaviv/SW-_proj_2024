@@ -117,7 +117,6 @@ double** norm(double** data, double** res, int n, int d) {
     if (!temp){
         free_matrix(data, n); free_matrix(res, n); free_matrix(sym_matrix, n); free_matrix(ddg_matrix, n); free_matrix(ddg_sqrt, n);
         printf("An Error Has Occurred\n"); exit(1); }
-
     /* Calculate ddg^(-1/2) */
     for (i = 0; i < n; i++) {
         value = ddg_matrix[i][i];

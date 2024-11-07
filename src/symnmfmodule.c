@@ -6,11 +6,11 @@
 /* Convert a Python list of lists (py_matrix) to a C matrix */
 static double** python_matrix_to_c_matrix(PyObject* py_matrix, int n, int d) {
     double** c_matrix = (double**)calloc(n, sizeof(double*));
-    if (!c_matrix) return NULL;  /* Check allocation */
+    if (!c_matrix) return NULL;  
 
     for (int i = 0; i < n; i++) {
         c_matrix[i] = (double*)calloc(d, sizeof(double));
-        if (!c_matrix[i]) return NULL;  /* Check allocation */
+        if (!c_matrix[i]) return NULL;  
 
         PyObject* row = PyList_GetItem(py_matrix, i);
         for (int j = 0; j < d; j++) {
@@ -40,7 +40,6 @@ void calc_dimensions(PyObject *py_matrix, int *rows, int *cols) {
     *rows = PyList_Size(py_matrix);
     if (*rows == 0) {
         printf("An Error Has Occurred\n");
-        printf("num of rows is:%d",*rows);
         return;
     }
     *cols = PyList_Size(PyList_GetItem(py_matrix, 0));

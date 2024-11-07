@@ -10,8 +10,7 @@
 void get_dimensions(const char* filename, int* n, int* d) {
     FILE* file;
     char line[1024];
-    *n = 0; /* Initialize number of rows */
-    *d = 0; /* Initialize number of columns */
+    *n = 0; *d = 0; 
 
     file = fopen(filename, "r");
     if (!file) {
@@ -44,7 +43,6 @@ double** read_data(const char* filename, int* n, int* d) {
     int i = 0; int j;
     
     get_dimensions(filename, n, d);
-
     data = allocate_matrix(*n, *d);
     if (!data){
       printf("An Error Has Occurred\n");
@@ -54,8 +52,7 @@ double** read_data(const char* filename, int* n, int* d) {
     file = fopen(filename, "r");
     if (!file) {
         printf("An Error Has Occurred\n");
-        free_matrix(data, *n);
-        exit(1);
+        free_matrix(data, *n); exit(1);
     }
 
     /* Rewind the file pointer to the beginning of the file */
@@ -71,7 +68,6 @@ double** read_data(const char* filename, int* n, int* d) {
             j++;
         }
         i++;}
-
     fclose(file);
     return data;
 }
