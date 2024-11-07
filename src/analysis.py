@@ -1,7 +1,7 @@
 import sys
 import numpy as np
 from sklearn.metrics import silhouette_score
-import symnmf_module
+from symnmf import symnmf_construct
 from kmeans import kmeans_calc, euclidean_dist
 
 # Default number of iterations for KMeans
@@ -74,8 +74,8 @@ def main():
     n = len(vectors)
 
     # Perform SymNMF clustering and compute the silhouette score
-    symnmf = np.array(symnmf_module.symnmf_construct(vectors, k, n))
-    nmf_clusters = np.argmax(symnmf, axis=1)
+    symnmf_mat = np.array(symnmf_construct(vectors, k, n))
+    nmf_clusters = np.argmax(symnmf_mat, axis=1)
     nmf_score = silhouette_score(data, nmf_clusters)
 
     # Compute silhouette score for KMeans clustering

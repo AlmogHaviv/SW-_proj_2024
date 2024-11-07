@@ -38,11 +38,11 @@ def initialize_H(W, n, k):
 
 def symnmf_construct(data, k, n):
      # Initialize the similarity matrix using the C extension
-    W_norm = symnmf.norm(data)
+    W_norm = symnmf_module.norm(data)
     # Initialize H
     H_init = initialize_H(np.array(W_norm), n, k).tolist()
     # Call the C function to perform SymNMF and get the final H
-    H_final = symnmf.symnmf(n, k, W_norm, H_init)
+    H_final = symnmf_module.symnmf(n, k, W_norm, H_init)
 
     return H_final
 
@@ -59,17 +59,17 @@ def main():
 
         if args.goal == 'sym':
             # Call the C function to compute the similarity matrix
-            sym_mat = symnmf.sym(data)
+            sym_mat = symnmf_module.sym(data)
             print_matrix(sym_mat)
 
         elif args.goal == 'ddg':
             # Call the C function to compute the diagonal degree matrix
-            ddg_mat = symnmf.ddg(data)
+            ddg_mat = symnmf_module.ddg(data)
             print_matrix(ddg_mat)
 
         elif args.goal == 'norm':
             # Call the C function to compute the normalized similarity matrix
-            W_norm = symnmf.norm(data)
+            W_norm = symnmf_module.norm(data)
             print_matrix(W_norm)
 
         elif args.goal == 'symnmf':
