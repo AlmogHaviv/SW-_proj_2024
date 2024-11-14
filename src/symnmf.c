@@ -126,7 +126,6 @@ double** norm(double** data, double** res, int n, int d) {
     /* Calculate res = ddg_sqrt * sym_matrix * ddg_sqrt */
     matrix_multiply(ddg_sqrt, sym_matrix, temp, n, n, n); /* ddg_sqrt * sym_matrix */
     matrix_multiply(temp, ddg_sqrt, res, n, n, n); /* (ddg_sqrt * sym_matrix) * ddg_sqrt */
-
     free_matrix(temp, n); free_matrix(sym_matrix, n); free_matrix(ddg_sqrt, n); free_matrix(ddg_matrix, n);
     return res;
 }

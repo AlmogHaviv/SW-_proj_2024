@@ -79,6 +79,7 @@ def main():
             print_matrix(W_norm)
 
         elif args.goal == 'symnmf':
+            # Call the C function to perform SymNMF on the input data.
             H_final = symnmf_construct(data, args.k, n)
             print_matrix(H_final)
 

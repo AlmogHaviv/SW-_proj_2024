@@ -7,10 +7,9 @@ from kmeans import kmeans_calc, euclidean_dist
 # Default number of iterations for KMeans
 DEFAULT_ITER = 300
 
+
+# Apply KMeans clustering and return the silhouette score.
 def apply_kmeans(data, k, vectors):
-    """
-    Apply KMeans clustering and return the silhouette score.
-    """
     # Calculate KMeans centroids
     centroids = kmeans_calc(k, DEFAULT_ITER, data)
 
@@ -22,10 +21,8 @@ def apply_kmeans(data, k, vectors):
     return score
 
 
+# Assign each data point to the closest centroid to form clusters.
 def get_clusters(centroids, vectors):
-    """
-    Assign each data point to the closest centroid to form clusters.
-    """
     labels = np.zeros(len(vectors), dtype=int)
 
     for i, vector in enumerate(vectors):

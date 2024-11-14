@@ -189,7 +189,6 @@ void update_H(double** H, double** W, int n, int k) {
             denominator = HHTH[i][j] != 0 ? HHTH[i][j] : 1;
             H[i][j] = H[i][j] * ((1 - BETA) + BETA * (WH[i][j] / denominator));
         }}
-
     /* Free temporary matrices */
     free_matrix(WH, n); free_matrix(H_T, k); free_matrix(HHT, n); free_matrix(HHTH, n);
 }
