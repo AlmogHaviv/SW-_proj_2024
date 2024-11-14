@@ -16,7 +16,13 @@ def load_data(file_name):
     # Load data points from the file, assuming one data point per line
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", category=UserWarning)
+        
         data = np.loadtxt(file_name, delimiter=',')
+        
+        # Convert to a list of lists if 1D
+        if data.ndim == 1:
+            data = data[:, np.newaxis]  # Add a new axis to make it 2D
+            
         res = data.tolist()
         return res
 
@@ -53,7 +59,7 @@ def main():
         data = load_data(args.file_name)
         data = np.ascontiguousarray(data, dtype=np.float64).tolist()
         n = len(data)
-        if int(args.k) >= n:
+        if int(args.k) < 1 or int(args.k) >= n:
             print("An Error Has Occurred")
             return
 
