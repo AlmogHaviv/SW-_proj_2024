@@ -10,14 +10,6 @@ DEFAULT_ITER = 300
 def apply_kmeans(data, k, vectors):
     """
     Apply KMeans clustering and return the silhouette score.
-
-    Parameters:
-    - data (ndarray): Array of data points, shape (n_samples, n_features).
-    - k (int): Number of clusters.
-    - vectors (list): Data points in list format.
-
-    Returns:
-    - score (float): Silhouette score for KMeans clustering.
     """
     # Calculate KMeans centroids
     centroids = kmeans_calc(k, DEFAULT_ITER, data)
@@ -33,14 +25,6 @@ def apply_kmeans(data, k, vectors):
 def get_clusters(centroids, vectors):
     """
     Assign each data point to the closest centroid to form clusters.
-
-    Parameters:
-    - centroids (ndarray): Array of centroid coordinates, shape (k, n_features).
-    - vectors (ndarray): Array of data points, shape (n_samples, n_features).
-
-    Returns:
-    - labels (ndarray): Array of cluster assignments, where each index i
-      contains the cluster number for point i in vectors.
     """
     labels = np.zeros(len(vectors), dtype=int)
 
@@ -53,12 +37,10 @@ def get_clusters(centroids, vectors):
 
 
 def main():
-    # Check for correct command-line usage
     if len(sys.argv) != 3:
-        print("Usage: python3 analysis.py <number_of_clusters> <file_path>")
+        print("An Error Has Occurred")
         sys.exit(1)
 
-    # Parse arguments
     k = int(sys.argv[1])
     file_path = sys.argv[2]
 
@@ -67,7 +49,7 @@ def main():
         data = np.loadtxt(file_path, delimiter=',')
         vectors = data.tolist()
     except:
-        print("An error occurred while reading the data file.")
+        print("An Error Has Occurred")
         sys.exit(1)
 
     # Get the number of data points
